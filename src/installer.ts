@@ -1,6 +1,6 @@
 import { mkdir, cp, access, readdir, writeFile } from "fs/promises";
 import { join, basename, normalize, resolve, sep } from "path";
-import type { Skill, AgentType, MintlifySkill } from "./types.js";
+import type { Skill, AgentType, MintlifySkill, RemoteSkill } from "./types.js";
 import { agents } from "./agents.js";
 
 const AGENTS_DIR = '.agents';
@@ -278,6 +278,7 @@ export function getInstallPath(
 /**
  * Install a Mintlify skill from a direct URL
  * The skill name is derived from the mintlify-proj frontmatter
+ * @deprecated Use installRemoteSkillForAgent instead
  */
 export async function installMintlifySkillForAgent(
   skill: MintlifySkill,
@@ -288,6 +289,52 @@ export async function installMintlifySkillForAgent(
 
   // Use mintlify-proj as the skill directory name (e.g., "bun.com")
   const skillName = sanitizeName(skill.mintlifySite);
+
+  const targetBase = options.global
+    ? agent.globalSkillsDir
+    : join(options.cwd || process.cwd(), agent.skillsDir);
+
+  const targetDir = join(targetBase, skillName);
+
+  // Validate that the target directory is within the expected base
+  if (!isPathSafe(targetBase, targetDir)) {
+    return {
+      success: false,
+      path: targetDir,
+      error: "Invalid skill name: potential path traversal detected",
+    };
+  }
+
+  try {
+    await mkdir(targetDir, { recursive: true });
+
+    // Write the SKILL.md content directly
+    const skillMdPath = join(targetDir, "SKILL.md");
+    await writeFile(skillMdPath, skill.content, "utf-8");
+
+    return { success: true, path: targetDir };
+  } catch (error) {
+    return {
+      success: false,
+      path: targetDir,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Install a remote skill from any host provider.
+ * The skill directory name is derived from the installName field.
+ */
+export async function installRemoteSkillForAgent(
+  skill: RemoteSkill,
+  agentType: AgentType,
+  options: { global?: boolean; cwd?: string } = {},
+): Promise<InstallResult> {
+  const agent = agents[agentType];
+
+  // Use installName as the skill directory name
+  const skillName = sanitizeName(skill.installName);
 
   const targetBase = options.global
     ? agent.globalSkillsDir

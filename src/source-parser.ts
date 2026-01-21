@@ -35,8 +35,13 @@ function isLocalPath(input: string): boolean {
 }
 
 /**
- * Check if a URL is a direct link to a skill.md file (non-GitHub/GitLab)
+ * Check if a URL is a direct link to a skill.md file.
+ * Supports various hosts: Mintlify docs, HuggingFace Spaces, etc.
  * e.g., https://docs.bun.com/docs/skill.md
+ * e.g., https://huggingface.co/spaces/owner/repo/blob/main/SKILL.md
+ * 
+ * Note: GitHub and GitLab URLs are excluded as they have their own handling
+ * for cloning repositories.
  */
 function isDirectSkillUrl(input: string): boolean {
     if (!input.startsWith('http://') && !input.startsWith('https://')) {
@@ -48,8 +53,16 @@ function isDirectSkillUrl(input: string): boolean {
         return false;
     }
     
-    // Exclude GitHub and GitLab URLs - they have their own handling
-    if (input.includes('github.com') || input.includes('gitlab.com')) {
+    // Exclude GitHub and GitLab repository URLs - they have their own handling
+    // (but allow raw.githubusercontent.com if someone wants to use it directly)
+    if (input.includes('github.com/') && !input.includes('raw.githubusercontent.com')) {
+        // Check if it's a blob/raw URL to SKILL.md (these should be handled by providers)
+        // vs a tree/repo URL (these should be cloned)
+        if (!input.includes('/blob/') && !input.includes('/raw/')) {
+            return false;
+        }
+    }
+    if (input.includes('gitlab.com/') && !input.includes('/-/raw/')) {
         return false;
     }
     
