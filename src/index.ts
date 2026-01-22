@@ -786,7 +786,12 @@ async function handleDirectUrlSkillLegacy(
 }
 
 async function main(source: string, options: Options) {
-    if (options.all) {
+  // Auto-enable non-interactive mode when no TTY is available (e.g., running from Claude Code)
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    options.yes = true;
+  }
+
+  if (options.all) {
     options.yes = true;
     options.global = true;
   }
@@ -898,28 +903,44 @@ async function main(source: string, options: Options) {
       selectedSkills = skills;
       p.log.info(`Installing all ${skills.length} skills`);
     } else {
-      const skillChoices = skills.map((s) => ({
-        value: s,
-        label: getSkillDisplayName(s),
-        hint:
-          s.description.length > 60
-            ? s.description.slice(0, 57) + "..."
-            : s.description,
-      }));
+      // Add "Select All" option at the top of the list
+      const SELECT_ALL_VALUE = Symbol('SELECT_ALL');
+      type SkillChoice = Skill | typeof SELECT_ALL_VALUE;
+
+      const skillChoices: Array<{ value: SkillChoice; label: string; hint?: string }> = [
+        {
+          value: SELECT_ALL_VALUE,
+          label: 'Select All',
+          hint: `Install all ${skills.length} skills`,
+        },
+        ...skills.map((s) => ({
+          value: s as SkillChoice,
+          label: getSkillDisplayName(s),
+          hint:
+            s.description.length > 60
+              ? s.description.slice(0, 57) + '...'
+              : s.description,
+        })),
+      ];
 
       const selected = await p.multiselect({
-        message: "Select skills to install",
+        message: 'Select skills to install',
         options: skillChoices,
         required: true,
       });
 
       if (p.isCancel(selected)) {
-        p.cancel("Installation cancelled");
+        p.cancel('Installation cancelled');
         await cleanup(tempDir);
         process.exit(0);
       }
 
-      selectedSkills = selected as Skill[];
+      // If "Select All" was chosen, install all skills
+      if ((selected as SkillChoice[]).includes(SELECT_ALL_VALUE)) {
+        selectedSkills = skills;
+      } else {
+        selectedSkills = selected as Skill[];
+      }
     }
 
     let targetAgents: AgentType[];
