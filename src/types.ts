@@ -27,6 +27,8 @@ export interface Skill {
   name: string;
   description: string;
   path: string;
+  /** Raw SKILL.md content for hashing */
+  rawContent?: string;
   metadata?: Record<string, string>;
 }
 

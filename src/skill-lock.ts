@@ -1,10 +1,11 @@
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
+import { createHash } from 'crypto';
 
 const AGENTS_DIR = '.agents';
 const LOCK_FILE = '.skill-lock.json';
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2; // Bumped from 1 to 2 for content hash support
 
 /**
  * Represents a single installed skill entry in the lock file.
@@ -18,6 +19,8 @@ export interface SkillLockEntry {
   sourceUrl: string;
   /** Subpath within the source repo, if applicable */
   skillPath?: string;
+  /** SHA-256 hash of the SKILL.md content at install time */
+  contentHash: string;
   /** ISO timestamp when the skill was first installed */
   installedAt: string;
   /** ISO timestamp when the skill was last updated */
@@ -45,6 +48,7 @@ export function getSkillLockPath(): string {
 /**
  * Read the skill lock file.
  * Returns an empty lock file structure if the file doesn't exist.
+ * Wipes the lock file if it's an old format (version < CURRENT_VERSION).
  */
 export async function readSkillLock(): Promise<SkillLockFile> {
   const lockPath = getSkillLockPath();
@@ -53,8 +57,13 @@ export async function readSkillLock(): Promise<SkillLockFile> {
     const content = await readFile(lockPath, 'utf-8');
     const parsed = JSON.parse(content) as SkillLockFile;
 
-    // Validate version and migrate if needed in the future
+    // Validate version - wipe if old format (missing contentHash support)
     if (typeof parsed.version !== 'number' || !parsed.skills) {
+      return createEmptyLockFile();
+    }
+
+    // If old version, wipe and start fresh (backwards incompatible change)
+    if (parsed.version < CURRENT_VERSION) {
       return createEmptyLockFile();
     }
 
@@ -78,6 +87,13 @@ export async function writeSkillLock(lock: SkillLockFile): Promise<void> {
   // Write with pretty formatting for human readability
   const content = JSON.stringify(lock, null, 2);
   await writeFile(lockPath, content, 'utf-8');
+}
+
+/**
+ * Compute SHA-256 hash of content.
+ */
+export function computeContentHash(content: string): string {
+  return createHash('sha256').update(content, 'utf-8').digest('hex');
 }
 
 /**

@@ -28,6 +28,7 @@ async function parseSkillMd(skillMdPath: string): Promise<Skill | null> {
       name: data.name,
       description: data.description,
       path: dirname(skillMdPath),
+      rawContent: content,
       metadata: data.metadata,
     };
   } catch {

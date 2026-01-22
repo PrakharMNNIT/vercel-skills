@@ -20,7 +20,7 @@ import { detectInstalledAgents, agents } from './agents.js';
 import { track, setVersion } from './telemetry.js';
 import { fetchMintlifySkill } from './mintlify.js';
 import { findProvider } from './providers/index.js';
-import { addSkillToLock } from './skill-lock.js';
+import { addSkillToLock, computeContentHash } from './skill-lock.js';
 import type { Skill, AgentType, MintlifySkill, RemoteSkill } from './types.js';
 import packageJson from '../package.json' with { type: 'json' };
 
@@ -404,6 +404,7 @@ async function handleRemoteSkill(
         source: remoteSkill.sourceIdentifier,
         sourceType: remoteSkill.providerId,
         sourceUrl: url,
+        contentHash: computeContentHash(remoteSkill.content),
       });
     } catch {
       // Don't fail installation if lock file update fails
@@ -738,6 +739,7 @@ async function handleDirectUrlSkillLegacy(
         source: `mintlify/${mintlifySkill.mintlifySite}`,
         sourceType: 'mintlify',
         sourceUrl: url,
+        contentHash: computeContentHash(mintlifySkill.content),
       });
     } catch {
       // Don't fail installation if lock file update fails
@@ -1198,6 +1200,7 @@ async function main(source: string, options: Options) {
               sourceType: parsed.type,
               sourceUrl: parsed.url,
               skillPath: skillFiles[skill.name],
+              contentHash: skill.rawContent ? computeContentHash(skill.rawContent) : '',
             });
           } catch {
             // Don't fail installation if lock file update fails
