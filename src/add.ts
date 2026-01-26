@@ -17,7 +17,12 @@ import { detectInstalledAgents, agents } from './agents.js';
 import { track, setVersion } from './telemetry.js';
 import { findProvider } from './providers/index.js';
 import { fetchMintlifySkill } from './mintlify.js';
-import { addSkillToLock, fetchSkillFolderHash } from './skill-lock.js';
+import {
+  addSkillToLock,
+  fetchSkillFolderHash,
+  isPromptDismissed,
+  dismissPrompt,
+} from './skill-lock.js';
 import type { Skill, AgentType, RemoteSkill } from './types.js';
 import packageJson from '../package.json' assert { type: 'json' };
 export function initTelemetry(version: string): void {
@@ -440,6 +445,9 @@ async function handleRemoteSkill(
 
   console.log();
   p.outro(chalk.green('Done!'));
+
+  // TODO: Prompt for find-skills after successful install (uncomment when ready)
+  // await promptForFindSkills();
 }
 
 /**
@@ -750,10 +758,22 @@ async function handleDirectUrlSkillLegacy(
 
   console.log();
   p.outro(chalk.green('Done!'));
+
+  // TODO: Prompt for find-skills after successful install (uncomment when ready)
+  // await promptForFindSkills();
 }
 
 export async function runAdd(args: string[], options: AddOptions = {}): Promise<void> {
   const source = args[0];
+  let installTipShown = false;
+
+  const showInstallTip = (): void => {
+    if (installTipShown) return;
+    p.log.message(
+      chalk.dim('Tip: use the --yes (-y) and --global (-g) flags to install without prompts.')
+    );
+    installTipShown = true;
+  };
 
   if (!source) {
     console.log();
@@ -780,6 +800,10 @@ export async function runAdd(args: string[], options: AddOptions = {}): Promise<
 
   console.log();
   p.intro(chalk.bgCyan.black(' skills '));
+
+  if (!process.stdin.isTTY) {
+    showInstallTip();
+  }
 
   let tempDir: string | null = null;
 
@@ -1259,6 +1283,9 @@ export async function runAdd(args: string[], options: AddOptions = {}): Promise<
 
     console.log();
     p.outro(chalk.green('Done!'));
+
+    // TODO: Prompt for find-skills after successful install (uncomment when ready)
+    // await promptForFindSkills();
   } catch (error) {
     if (error instanceof GitCloneError) {
       p.log.error(chalk.red('Failed to clone repository'));
@@ -1269,6 +1296,7 @@ export async function runAdd(args: string[], options: AddOptions = {}): Promise<
     } else {
       p.log.error(error instanceof Error ? error.message : 'Unknown error occurred');
     }
+    showInstallTip();
     p.outro(chalk.red('Installation failed'));
     process.exit(1);
   } finally {
@@ -1283,6 +1311,72 @@ async function cleanup(tempDir: string | null) {
     } catch {
       // Ignore cleanup errors
     }
+  }
+}
+
+/**
+ * Prompt user to install the find-skills skill after their first installation.
+ * This helps users discover skills via their coding agent.
+ * The prompt is only shown once - if dismissed, it's stored in the lock file.
+ */
+async function promptForFindSkills(): Promise<void> {
+  // Skip if already dismissed or not in interactive mode
+  if (!process.stdin.isTTY) return;
+
+  try {
+    const dismissed = await isPromptDismissed('findSkillsPrompt');
+    if (dismissed) return;
+
+    // Check if find-skills is already installed
+    const findSkillsInstalled = await isSkillInstalled('find-skills', 'claude-code', {
+      global: true,
+    });
+    if (findSkillsInstalled) {
+      // Mark as dismissed so we don't check again
+      await dismissPrompt('findSkillsPrompt');
+      return;
+    }
+
+    console.log();
+    const install = await p.confirm({
+      message: `Install the ${chalk.cyan('find-skills')} skill? It helps your agent discover and suggest skills.`,
+    });
+
+    if (p.isCancel(install)) {
+      await dismissPrompt('findSkillsPrompt');
+      return;
+    }
+
+    if (install) {
+      // Install find-skills globally to all agents
+      console.log();
+      p.log.step('Installing find-skills skill...');
+
+      // Run installation via the CLI (using the bundled skill in this repo)
+      const { spawnSync } = await import('child_process');
+      const result = spawnSync(
+        'npx',
+        ['-y', 'skills', 'add', 'vercel-labs/skills@find-skills', '-g', '-y', '--all'],
+        {
+          stdio: 'inherit',
+        }
+      );
+
+      if (result.status === 0) {
+        p.log.success('find-skills installed! Your agent can now help you discover skills.');
+      } else {
+        p.log.warn('Failed to install find-skills. You can try again with:');
+        p.log.message(chalk.dim('  npx skills add vercel-labs/skills@find-skills -g -y --all'));
+      }
+    } else {
+      // User declined - dismiss the prompt
+      await dismissPrompt('findSkillsPrompt');
+      p.log.message(
+        chalk.dim('You can install it later with: npx skills add vercel-labs/skills@find-skills')
+      );
+    }
+  } catch {
+    // Don't fail the main installation if prompt fails
   }
 }
 
