@@ -3,7 +3,7 @@
 The CLI for the open agent skills ecosystem.
 
 <!-- agent-list:start -->
-Supports **OpenCode**, **Claude Code**, **Codex**, **Cursor**, and [73 more](#supported-agents).
+Supports **OpenCode**, **Claude Code**, **Codex**, **Cursor**, and [74 more](#supported-agents).
 <!-- agent-list:end -->
 
 [![skills.sh](https://skills.sh/b/vercel-labs/skills)](https://skills.sh/vercel-labs/skills)
@@ -326,6 +326,7 @@ Skills can be installed to any of these agents:
 | Reasonix | `reasonix` | `.reasonix/skills/` | `~/.reasonix/skills/` |
 | Rovo Dev | `rovodev` | `.rovodev/skills/` | `~/.rovodev/skills/` |
 | Roo Code | `roo` | `.roo/skills/` | `~/.roo/skills/` |
+| Sarvam Code | `sarvam-code` | `.sarvam/skills/` | `~/.sarvam/skills/` |
 | Tabnine CLI | `tabnine-cli` | `.tabnine/agent/skills/` | `~/.tabnine/agent/skills/` |
 | Terramind | `terramind` | `.terramind/skills/` | `~/.terramind/skills/` |
 | Tinycloud | `tinycloud` | `.tinycloud/skills/` | `~/.tinycloud/skills/` |
@@ -459,6 +460,7 @@ discover `SKILL.md` files outside these container directories (e.g. under
 - `.reasonix/skills/`
 - `.rovodev/skills/`
 - `.roo/skills/`
+- `.sarvam/skills/`
 - `.tabnine/agent/skills/`
 - `.terramind/skills/`
 - `.tinycloud/skills/`
