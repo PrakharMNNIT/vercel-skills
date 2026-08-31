@@ -1,6 +1,6 @@
 import { mkdirSync, rmSync } from 'fs';
+import { homedir, tmpdir } from 'os';
 import { join } from 'path';
-import { tmpdir } from 'os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('Sarvam Code agent support', () => {
@@ -9,16 +9,14 @@ describe('Sarvam Code agent support', () => {
     vi.resetModules();
   });
 
-  it('uses .sarvam/skills and respects SARVAM_HOME for global skills', async () => {
-    const sarvamHome = join(tmpdir(), 'custom-sarvam-home');
-    vi.stubEnv('SARVAM_HOME', sarvamHome);
-
-    const { agents } = await import('../src/agents.ts');
+  it('installs into the universal .agents/skills directory', async () => {
+    const { agents, isUniversalAgent } = await import('../src/agents.ts');
 
     expect(agents['sarvam-code'].name).toBe('sarvam-code');
     expect(agents['sarvam-code'].displayName).toBe('Sarvam Code');
-    expect(agents['sarvam-code'].skillsDir).toBe('.sarvam/skills');
-    expect(agents['sarvam-code'].globalSkillsDir).toBe(join(sarvamHome, 'skills'));
+    expect(agents['sarvam-code'].skillsDir).toBe('.agents/skills');
+    expect(agents['sarvam-code'].globalSkillsDir).toBe(join(homedir(), '.agents', 'skills'));
+    expect(isUniversalAgent('sarvam-code')).toBe(true);
   });
 
   it('detects Sarvam Code from its resolved home directory', async () => {
@@ -51,11 +49,5 @@ describe('Sarvam Code agent support', () => {
 
     expect(result.options.agent).toEqual(['sarvam-code']);
     expect(result.errors).toEqual([]);
-  });
-
-  it('maps the sarvam-code detect-agent name to the sarvam-code type', async () => {
-    const { getAgentType } = await import('../src/detect-agent.ts');
-
-    expect(getAgentType('sarvam-code')).toBe('sarvam-code');
   });
 });

@@ -641,8 +641,8 @@ export const agents: Record<AgentType, AgentConfig> = {
   'sarvam-code': {
     name: 'sarvam-code',
     displayName: 'Sarvam Code',
-    skillsDir: '.sarvam/skills',
-    globalSkillsDir: join(sarvamHome, 'skills'),
+    skillsDir: '.agents/skills',
+    globalSkillsDir: join(home, '.agents/skills'),
     detectInstalled: async () => {
       return existsSync(sarvamHome);
     },

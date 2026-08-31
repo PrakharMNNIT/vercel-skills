@@ -51,7 +51,6 @@ const agentNameToType: Record<string, AgentType> = {
   'augment-cli': 'augment',
   opencode: 'opencode',
   'github-copilot': 'github-copilot',
-  'sarvam-code': 'sarvam-code',
 };
 
 /**

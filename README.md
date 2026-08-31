@@ -279,7 +279,7 @@ Skills can be installed to any of these agents:
 | IBM Bob | `bob` | `.bob/skills/` | `~/.bob/skills/` |
 | Claude Code | `claude-code` | `.claude/skills/` | `~/.claude/skills/` |
 | OpenClaw | `openclaw` | `skills/` | `~/.openclaw/skills/` |
-| Cline, Dexto, Kimi Code CLI, Loaf, Warp, Zed | `cline`, `dexto`, `kimi-code-cli`, `loaf`, `warp`, `zed` | `.agents/skills/` | `~/.agents/skills/` |
+| Cline, Dexto, Kimi Code CLI, Loaf, Sarvam Code, Warp, Zed | `cline`, `dexto`, `kimi-code-cli`, `loaf`, `sarvam-code`, `warp`, `zed` | `.agents/skills/` | `~/.agents/skills/` |
 | CodeArts Agent | `codearts-agent` | `.codeartsdoer/skills/` | `~/.codeartsdoer/skills/` |
 | CodeBuddy | `codebuddy` | `.codebuddy/skills/` | `~/.codebuddy/skills/` |
 | Codemaker | `codemaker` | `.codemaker/skills/` | `~/.codemaker/skills/` |
@@ -326,7 +326,6 @@ Skills can be installed to any of these agents:
 | Reasonix | `reasonix` | `.reasonix/skills/` | `~/.reasonix/skills/` |
 | Rovo Dev | `rovodev` | `.rovodev/skills/` | `~/.rovodev/skills/` |
 | Roo Code | `roo` | `.roo/skills/` | `~/.roo/skills/` |
-| Sarvam Code | `sarvam-code` | `.sarvam/skills/` | `~/.sarvam/skills/` |
 | Tabnine CLI | `tabnine-cli` | `.tabnine/agent/skills/` | `~/.tabnine/agent/skills/` |
 | Terramind | `terramind` | `.terramind/skills/` | `~/.terramind/skills/` |
 | Tinycloud | `tinycloud` | `.tinycloud/skills/` | `~/.tinycloud/skills/` |
@@ -460,7 +459,6 @@ discover `SKILL.md` files outside these container directories (e.g. under
 - `.reasonix/skills/`
 - `.rovodev/skills/`
 - `.roo/skills/`
-- `.sarvam/skills/`
 - `.tabnine/agent/skills/`
 - `.terramind/skills/`
 - `.tinycloud/skills/`
